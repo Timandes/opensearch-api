@@ -7,12 +7,12 @@ OpenAPI Spec for Aliyun Opensearch
 
 Download [Swagger Codegen](https://github.com/swagger-api/swagger-codegen):
 ```shell
-wget https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/3.0.0-rc1/swagger-codegen-cli-3.0.0-rc1.jar
+wget https://oss.sonatype.org/content/repositories/snapshots/io/swagger/swagger-codegen-cli/2.4.5-SNAPSHOT/swagger-codegen-cli-2.4.5-20190405.072732-10.jar
 ```
 
 Generate Java Client
 ```shell
-java -jar swagger-codegen-cli-3.0.0-rc1.jar generate -i openapi.yaml -l java -o build/java
+java -jar swagger-codegen-cli-2.4.5-20190405.072732-10.jar generate -i swagger.yaml -l go -o build/go
 ```
 
 
