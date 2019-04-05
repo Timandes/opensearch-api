@@ -1,0 +1,89 @@
+swagger: '2.0'
+info:
+  version: 3.0.0
+  title: "Opensearch API"
+host: "opensearch-cn-hangzhou.aliyuncs.com"
+securityDefinitions:
+  http:
+    type: "basic"
+security: 
+  - http: []
+paths:
+  /apps/{app_name}/search:
+    get:
+      summary: "搜索处理"
+      description: "系统提供了丰富的搜索语法以满足用户各种场景下的搜索需求。"
+      parameters:
+        - name: app_name
+          in: path
+          description: "表示应用名（新高级版/标准版是多应用版本类型，需要指定应用名访问，主要针对服务中的应用版本）。"
+          required: true
+          type: string
+        - name: query
+          in: query
+          description: "搜索主体，不能为空。主要支持子句有 config子句、query子句、sort子句、filter子句、aggregate子句、distinct子句 、kvpairs子句。"
+          required: true
+          type: string
+      produces: 
+        - application/json
+      responses:
+        200:
+          description: "搜索成功"
+          schema:
+            $ref: '#/definitions/Response'
+        default:
+          description: "搜索失败"
+          schema:
+            $ref: '#/definitions/Response'
+definitions:
+  Response:
+    properties:
+      status:
+        description: "执行结果，OK为成功，FAIL为失败，请根据返回错误码进行排查"
+        type: string
+        enum:
+          - OK
+          - FAIL
+      request_id:
+        description: "该条查询的记录id，主要用于排查问题使用"
+        type: string
+        pattern: "^[0-9]+$"
+      result:
+        $ref: '#/definitions/SearchResult'
+      errors:
+        description: "错误内容，error_message代表错误信息。error_code 对应含义参考 错误码 文档"
+        type: array
+        items:
+          $ref: "#/definitions/Error"
+  SearchResult:
+    description: "实际返回结果，包括查询耗时searchtime、引擎总结果数total、本次请求返回结果数num、本次查询最大返回结果数viewtotal、查询结果items、统计结果facet等信息"
+    properties:
+      searchtime:
+        description: "指引擎耗时，单位为秒。"
+      total:
+        description: "total为一次查询（不考虑config子句）引擎中符合条件的结果数（在结果数较多情况下，该值会做优化），一般用来做展示。"
+        type: integer
+      viewtotal:
+        description: "考虑到性能及相关性，引擎最多会返回viewtotal个结果。如果需要翻页的话，要求start+hit必需要小于viewtotal"
+        type: integer
+      num:
+        description: "num为本次查询请求（受限于config子句的start及hit）实际返回的条目，不会超过hit值。"
+        type: integer
+      items:
+        description: "包含查询召回数据信息，其中fields为搜索召回内容。"
+        type: array
+        items:
+          $ref: "#/definitions/SearchResultItem"
+  SearchResultItem:
+    properties:
+      fields:
+        description: "搜索召回内容"
+        type: object
+  Error:
+    properties:
+      code:
+        description: "错误代码"
+        type: integer
+      message:
+        description: "错误描述"
+        type: string
