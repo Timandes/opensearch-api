@@ -9,7 +9,7 @@ securityDefinitions:
 security: 
   - http: []
 paths:
-  /apps/{app_name}/search:
+  /v3/openapi/apps/{app_name}/search:
     get:
       summary: "搜索处理"
       description: "系统提供了丰富的搜索语法以满足用户各种场景下的搜索需求。"
@@ -24,6 +24,56 @@ paths:
           description: "搜索主体，不能为空。主要支持子句有 config子句、query子句、sort子句、filter子句、aggregate子句、distinct子句 、kvpairs子句。"
           required: true
           type: string
+        - name: fetch_fields
+          in: query
+          description: "表示本次查询需要召回哪些字段值，多个字段之间通过英文分号;分隔，对应控制台中的默认展示字段功能。默认使用全部可展示字段。"
+          required: false
+          type: string
+        - name: qp
+          in: query
+          description: "指定要使用的查询分析规则，多个规则使用英文逗号,分隔。默认使用已上线规则"
+          required: false
+          type: string
+        - name: disable
+          in: query
+          description: "关闭指定已生效的参数功能。"
+          required: false
+          type: string
+        - name: first_rank_name
+          in: query
+          description: "设置粗排表达式名字。"
+          required: false
+          type: string
+        - name: second_rank_name
+          in: query
+          description: "设置精排表达式名字。"
+          required: false
+          type: string
+        - name: user_id
+          in: query
+          description: "用来标识发起当前搜索请求的终端用户。该值可以设置为下列值，优先级从高到低：1. 终端用户的长登录会员ID；2. 终端用户的移动设备imei标识；3. 终端用户的client_ip"
+          required: false
+          type: string
+        - name: abtest
+          in: query
+          description: "使用A/B Test功能时需要设置该参数。"
+          required: false
+          type: string
+        - name: category_prediction
+          in: query
+          description: "通过类目预测功能搜索时需要设置该参数。"
+          required: false
+          type: string
+        - name: raw_query
+          in: query
+          description: "终端用户输入的query，用于类目预测相关模型训练。"
+          required: false
+          type: string
+        - name: summary
+          in: query
+          description: "搜索结果摘要配置，可以指定某些字段进行飘红、截断等操作。"
+          required: false
+          type: string
       produces: 
         - application/json
       responses:
@@ -33,6 +83,36 @@ paths:
             $ref: '#/definitions/Response'
         default:
           description: "搜索失败"
+          schema:
+            $ref: '#/definitions/Response'
+  /v3/openapi/apps/{app_name}/{table_name}/actions/bulk:
+    post:
+      summary: "数据处理"
+      description: "支持新增、更新、删除 等操作，以及对应批量操作"
+      produces: 
+        - application/json
+      parameters: 
+        - name: app_name
+          in: path
+          description: "表示应用名（新高级版/标准版是多应用版本类型，需要指定应用名访问，主要针对服务中的应用版本）。"
+          required: true
+          type: string
+        - name: table_name
+          in: path
+          description: "要将数据推送到应用中的表名"
+          required: true
+          type: string
+        - name: document
+          in: body
+          schema:
+            $ref: '#/definitions/Document'
+      responses:
+        200:
+          description: "操作成功"
+          schema:
+            $ref: '#/definitions/Response'
+        default:
+          description: "操作失败"
           schema:
             $ref: '#/definitions/Response'
 definitions:
@@ -74,11 +154,37 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/SearchResultItem"
+      facet:
+        description: "用于存放Aggregate子句返回的信息。"
+        type: array
+        items:
+          $ref: "#/definitions/SearchResultFacet"
   SearchResultItem:
     properties:
       fields:
         description: "搜索召回内容"
         type: object
+      variableValue:
+        description: "表示自定义参数返回结果，如获取distance距离值，variableValue 节点只有在config子句的format为xml或者fulljson时才能展现出来，json格式默认不展示。"
+        type: object
+      sortExprValues:
+        description: "表示对应文档排序分。"
+        type: array
+        items:
+          type: number
+  SearchResultFacet:
+    properties:
+      key:
+        type: string
+      items:
+        type: array
+        items:
+          type: object
+          properties:
+            value:
+              type: string
+            count:
+              type: integer
   Error:
     properties:
       code:
@@ -87,3 +193,20 @@ definitions:
       message:
         description: "错误描述"
         type: string
+  Document:
+    required: ["cmd", "fields"]
+    properties:
+      cmd:
+        description: "必选字段。定义该文档的操作行为，可以为“add”、“update”、“delete”，标准版不支持“update”。建议一个请求中进行批量更新操作，提高网络交互及处理效率。“add”表示新增文档，如果该主键对应文档已经存在，则执行先“delete”再“add”的操作；“update”表示更新文档，对该主键对应文档进行部分字段更新；“delete”表示删除文档，如果该主键对应文档已经不存在，则认为删除成功。"
+        type: string
+        enum: 
+          - add
+          - update
+          - delete
+      timestamp:
+        description: "可选字段。用来记录文档实际发生时间，单位为毫秒。系统会用该时间戳来作为同一主键文档更新顺序的判断标准，该选项仅支持高级版，标准版应用，没有该timestamp选项，若指定该选项，推送会报4007错误码。在没有该timestamp项时，默认以文档发送到OpenSearch的时间作为文档更新时间进行操作。"
+        type: integer
+      fields:
+        description: "必选字段。要操作的文档内容，主键字段必选，系统所有操作都是通过主键来进行的。对于“delete”只需要提供文档主键即可。"
+        type: object
+      
