@@ -85,6 +85,45 @@ paths:
           description: "搜索失败"
           schema:
             $ref: '#/definitions/Response'
+  /v3/openapi/apps/{app_name}/suggest/{model_name}/search:
+    get:
+      summary: "下拉提示"
+      description: "下拉提示是搜索服务的基础功能，在用户输入查询词的过程中，智能推荐候选query，减少用户输入，帮助用户尽快找到想要的内容。"
+      produces: 
+        - application/json
+      parameters:
+        - name: app_name
+          in: path
+          description: "表示应用名（新高级版/标准版是多应用版本类型，需要指定应用名访问，主要针对服务中的应用版本）。"
+          required: true
+          type: string
+        - name: model_name
+          in: path
+          description: "下拉提示名称"
+          required: true
+          type: string
+        - name: query
+          in: query
+          description: "搜索关键词（包含中文需进行urlencode编码）"
+          required: true
+          type: string
+        - name: hit
+          in: query
+          description: "下拉提示条数"
+          required: false
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 10
+      responses:
+        200:
+          description: "搜索成功"
+          schema:
+            $ref: '#/definitions/SuggestionResponse'
+        default:
+          description: "搜索失败"
+          schema:
+            $ref: '#/definitions/SuggestionResponse'
   /v3/openapi/apps/{app_name}/{table_name}/actions/bulk:
     post:
       summary: "数据处理"
@@ -294,3 +333,24 @@ definitions:
       ops_request_misc:
         description: "开放搜索在搜索结果中返回的参数，只要原样设置即可。"
         type: string
+  SuggestionResponse:
+    properties:
+      request_id:
+        description: "该条查询的记录id，主要用于排查问题使用"
+        type: string
+        pattern: "^[0-9]+$"
+      searchtime:
+        description: "引擎查询耗时，单位为秒"
+        type: number
+      suggestions:
+        type: array
+        items:
+          type: object
+          properties:
+            suggestion:
+              type: string
+      errors:
+        description: "错误内容，error_message代表错误信息。error_code 对应含义参考 错误码 文档"
+        type: array
+        items:
+          $ref: "#/definitions/Error"
