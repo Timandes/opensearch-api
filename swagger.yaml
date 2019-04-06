@@ -105,7 +105,41 @@ paths:
         - name: document
           in: body
           schema:
-            $ref: '#/definitions/Document'
+            type: array
+            items:
+              $ref: '#/definitions/Document'
+      responses:
+        200:
+          description: "操作成功"
+          schema:
+            $ref: '#/definitions/Response'
+        default:
+          description: "操作失败"
+          schema:
+            $ref: '#/definitions/Response'
+  /v3/openapi/app-groups/{app_name}/data-collections/{collector_name}/actions/bulk:
+    post:
+      summary: "数据采集"
+      description: "为了给客户提供更高质量的搜索效果，opensearch目前支持客户通过server端上传点击数据。"
+      produces: 
+        - application/json
+      parameters: 
+        - name: app_name
+          in: path
+          description: "表示应用名（新高级版/标准版是多应用版本类型，需要指定应用名访问，主要针对服务中的应用版本）。"
+          required: true
+          type: string
+        - name: collector_name
+          in: path
+          description: "数据采集名称"
+          required: true
+          type: string
+        - name: Behavior
+          in: body
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Behavior'
       responses:
         200:
           description: "操作成功"
@@ -209,4 +243,54 @@ definitions:
       fields:
         description: "必选字段。要操作的文档内容，主键字段必选，系统所有操作都是通过主键来进行的。对于“delete”只需要提供文档主键即可。"
         type: object
-      
+  Behavior:
+    required: ["cmd", "fields"]
+    properties:
+      cmd:
+        description: "必选字段。定义该文档的操作行为，目前仅支持ADD"
+        type: string
+        enum: 
+          - ADD
+      fields:
+        description: "必选字段。行为数据主体。"
+        type: object
+        required: ["event_id", "page"]
+        properties:
+          event_id:
+            description: "埋点的事件ID，详见埋点规范"
+            type: integer
+            default: 2001
+          sdk_type:
+            description: "sdk类型， 如果使用sdk上传则为'opensearch_sdk'，默认为空"
+            type: string
+          sdk_version:
+            description: "opensearch_sdk版本号"
+            type: string
+          page:
+            description: "当前页面，不能为空"
+            type: string
+          arg1:
+            description: "事件参数，默认为空。当事件为2001时该参数代表搜索结果列表所在的页面名称，不能为空"
+            type: string
+          arg3:
+            description: "事件参数，默认为空。当事件为2001时该参数代表用户在详情页停留的时长（单位ms）"
+            type: string
+          args:
+            description: "事件参数，默认为空。当事件为2001时该参数为Event2001Args实体的字符串表示"
+            type: string
+          user_id:
+            description: "默认为空，实际中建议非空。该值可以设置为下列值，优先级从高到低：1. 终端用户的长登录会员ID；2. 终端用户的移动设备imei标识；3. 终端用户的client_ip"
+            type: string
+  Event2001Args:
+    description: "object_id=pk,object_type=ops_search_doc,ops_request_misc=xxx"
+    properties:
+      object_id:
+        description: "被点击的对象的主键，不能为空，如果通过api上传需要urlencode"
+        type: string
+      object_type:
+        description: "必须为ops_search_doc"
+        type: string
+        default: "ops_search_doc"
+      ops_request_misc:
+        description: "开放搜索在搜索结果中返回的参数，只要原样设置即可。"
+        type: string
