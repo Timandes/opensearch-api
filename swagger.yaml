@@ -1,6 +1,6 @@
 swagger: '2.0'
 info:
-  version: 3.0.0
+  version: 3.0.1
   title: "Opensearch API"
 host: "opensearch-cn-hangzhou.aliyuncs.com"
 securityDefinitions:
@@ -80,7 +80,7 @@ paths:
         200:
           description: "搜索成功"
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/SearchResponse'
         default:
           description: "搜索失败"
           schema:
@@ -123,7 +123,7 @@ paths:
         default:
           description: "搜索失败"
           schema:
-            $ref: '#/definitions/SuggestionResponse'
+            $ref: '#/definitions/Response'
   /v3/openapi/apps/{app_name}/{table_name}/actions/bulk:
     post:
       summary: "数据处理"
@@ -189,25 +189,31 @@ paths:
           schema:
             $ref: '#/definitions/Response'
 definitions:
-  Response:
+  Status:
+    description: "执行结果，OK为成功，FAIL为失败，请根据返回错误码进行排查"
+    type: string
+    enum:
+      - OK
+      - FAIL
+  RequestId:
+    description: "该条查询的记录id，主要用于排查问题使用"
+    type: string
+    pattern: "^[0-9]+$"
+  Errors:
+    description: "错误内容，error_message代表错误信息。error_code 对应含义参考 错误码 文档"
+    type: array
+    items:
+      $ref: "#/definitions/Error"
+  SearchResponse:
     properties:
       status:
-        description: "执行结果，OK为成功，FAIL为失败，请根据返回错误码进行排查"
-        type: string
-        enum:
-          - OK
-          - FAIL
+        $ref: "#/definitions/Status"
       request_id:
-        description: "该条查询的记录id，主要用于排查问题使用"
-        type: string
-        pattern: "^[0-9]+$"
+        $ref: "#/definitions/RequestId"
       result:
         $ref: '#/definitions/SearchResult'
       errors:
-        description: "错误内容，error_message代表错误信息。error_code 对应含义参考 错误码 文档"
-        type: array
-        items:
-          $ref: "#/definitions/Error"
+        $ref: "#/definitions/Errors"
   SearchResult:
     description: "实际返回结果，包括查询耗时searchtime、引擎总结果数total、本次请求返回结果数num、本次查询最大返回结果数viewtotal、查询结果items、统计结果facet等信息"
     properties:
@@ -336,9 +342,7 @@ definitions:
   SuggestionResponse:
     properties:
       request_id:
-        description: "该条查询的记录id，主要用于排查问题使用"
-        type: string
-        pattern: "^[0-9]+$"
+        $ref: "#/definitions/RequestId"
       searchtime:
         description: "引擎查询耗时，单位为秒"
         type: number
@@ -350,7 +354,12 @@ definitions:
             suggestion:
               type: string
       errors:
-        description: "错误内容，error_message代表错误信息。error_code 对应含义参考 错误码 文档"
-        type: array
-        items:
-          $ref: "#/definitions/Error"
+        $ref: "#/definitions/Errors"
+  Response:
+    properties:
+      status:
+        $ref: "#/definitions/Status"
+      request_id:
+        $ref: "#/definitions/RequestId"
+      errors:
+        $ref: "#/definitions/Errors"
