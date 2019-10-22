@@ -239,6 +239,8 @@ definitions:
         items:
           $ref: "#/definitions/SearchResultFacet"
   SearchResultItem:
+    type: object
+  SearchResultItemFullJson:
     properties:
       fields:
         description: "搜索召回内容"
