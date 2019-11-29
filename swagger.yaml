@@ -4,10 +4,10 @@ info:
   title: "Opensearch API"
 host: "opensearch-cn-hangzhou.aliyuncs.com"
 securityDefinitions:
-  http:
+  opensearch:
     type: "basic"
-security: 
-  - http: []
+security:
+  - opensearch: []
 paths:
   /v3/openapi/apps/{app_name}/search:
     get:
@@ -74,7 +74,7 @@ paths:
           description: "搜索结果摘要配置，可以指定某些字段进行飘红、截断等操作。"
           required: false
           type: string
-      produces: 
+      produces:
         - application/json
       responses:
         200:
@@ -89,7 +89,7 @@ paths:
     get:
       summary: "下拉提示"
       description: "下拉提示是搜索服务的基础功能，在用户输入查询词的过程中，智能推荐候选query，减少用户输入，帮助用户尽快找到想要的内容。"
-      produces: 
+      produces:
         - application/json
       parameters:
         - name: app_name
@@ -128,9 +128,9 @@ paths:
     post:
       summary: "数据处理"
       description: "支持新增、更新、删除 等操作，以及对应批量操作"
-      produces: 
+      produces:
         - application/json
-      parameters: 
+      parameters:
         - name: app_name
           in: path
           description: "表示应用名（新高级版/标准版是多应用版本类型，需要指定应用名访问，主要针对服务中的应用版本）。"
@@ -160,9 +160,9 @@ paths:
     post:
       summary: "数据采集"
       description: "为了给客户提供更高质量的搜索效果，opensearch目前支持客户通过server端上传点击数据。"
-      produces: 
+      produces:
         - application/json
-      parameters: 
+      parameters:
         - name: app_name
           in: path
           description: "表示应用名（新高级版/标准版是多应用版本类型，需要指定应用名访问，主要针对服务中的应用版本）。"
@@ -280,7 +280,7 @@ definitions:
       cmd:
         description: "必选字段。定义该文档的操作行为，可以为“add”、“update”、“delete”，标准版不支持“update”。建议一个请求中进行批量更新操作，提高网络交互及处理效率。“add”表示新增文档，如果该主键对应文档已经存在，则执行先“delete”再“add”的操作；“update”表示更新文档，对该主键对应文档进行部分字段更新；“delete”表示删除文档，如果该主键对应文档已经不存在，则认为删除成功。"
         type: string
-        enum: 
+        enum:
           - add
           - update
           - delete
@@ -296,7 +296,7 @@ definitions:
       cmd:
         description: "必选字段。定义该文档的操作行为，目前仅支持ADD"
         type: string
-        enum: 
+        enum:
           - ADD
       fields:
         description: "必选字段。行为数据主体。"
